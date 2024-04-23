@@ -1,14 +1,38 @@
 import os
 from googleapiclient.http import MediaFileUpload
+from logging.handlers import RotatingFileHandler
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 import datetime
 import time
+import logging
+
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/drive']
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Configure logging to both console and file
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# Define formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+# Define file handler
+log_file = 'backup.log'
+file_handler = RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=5)  # 10 MB max size, 5 backups
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+# Define console handler
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
 
 def authenticate():
     creds = None
@@ -59,10 +83,14 @@ def backup_to_drive():
                                media_body=media,
                                fields='id').execute()
 
+    logging.info('Starting backup process...')
+    # Perform backup operations
+    logging.info('Backup process completed successfully.')
+
     print('Backup completed successfully.')
 
 # Run backup periodically
 while True:
     backup_to_drive()
     # Sleep for 24 hours before running again
-    time.sleep(10 * 60)
+    time.sleep(5 * 60)
